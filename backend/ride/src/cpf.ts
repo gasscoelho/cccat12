@@ -1,61 +1,56 @@
-// @ts-nocheck
-export function validate (str) {
+const CPF_DIVISOR = 11
+const CPF_WEIGHT_FIRST_CHECK_DIGIT = 10
+const CPF_WEIGHT_SECOND_CHECK_DIGIT = CPF_DIVISOR
 
-	if (str !== null) {
-        if (str !== undefined) {
-            if (str.length >= 11 || str.length <= 14){
+function sanitizeString(input: string) {
+  return input
+    .replace(/\./g, '')
+    .replace(/\-/g, '')
+    .replace(/\s/g, '')
+}
 
-                str=str
-                    .replace('.','')
-                    .replace('.','')
-                    .replace('-','')
-                    .replace(" ","");  
-    
-                if (!str.split("").every(c => c === str[0])) {
-                    try{  
-                        let     d1, d2;  
-                        let     dg1, dg2, rest;  
-                        let     digito;  
-                            let     nDigResult;  
-                        d1 = d2 = 0;  
-                        dg1 = dg2 = rest = 0;  
-                            
-                        for (let nCount = 1; nCount < str.length -1; nCount++) {  
-                            // if (isNaN(parseInt(str.substring(nCount -1, nCount)))) {
-                            // 	return false;
-                            // } else {
-    
-                                digito = parseInt(str.substring(nCount -1, nCount));  							
-                                d1 = d1 + ( 11 - nCount ) * digito;  
-                
-                                d2 = d2 + ( 12 - nCount ) * digito;  
-                            // }
-                        };  
-                            
-                        rest = (d1 % 11);  
-                
-                        dg1 = (rest < 2) ? dg1 = 0 : 11 - rest;  
-                        d2 += 2 * dg1;  
-                        rest = (d2 % 11);  
-                        if (rest < 2)  
-                            dg2 = 0;  
-                        else  
-                            dg2 = 11 - rest;  
-                
-                            let nDigVerific = str.substring(str.length-2, str.length);  
-                        nDigResult = "" + dg1 + "" + dg2;  
-                        return nDigVerific == nDigResult;
-                    }catch (e){  
-                        console.error("Erro !"+e);  
-    
-                        return false;  
-                    }  
-                } else return false
-    
-            }else return false;
-        }
+function isIdenticalCharacters(input: string) {
+  return input.split('').every(char => char === input[0])
+}
 
+function extractCheckDigits(sanitizedInput: string) {
+  return sanitizedInput.substring(sanitizedInput.length - 2, sanitizedInput.length)
+}
 
-	} else return false;
+function extractBaseDigits(sanitizedInput: string) {
+  return sanitizedInput.substring(0, sanitizedInput.length - 2)
+}
 
+function calculateAccumulatorCheckDigits(digits: string) {
+  return Array.from(digits, Number).reduce(({ accFirstCheckDigit, accSecondCheckDigit }, digit, i) => {
+    return {
+      accFirstCheckDigit: accFirstCheckDigit + (CPF_WEIGHT_FIRST_CHECK_DIGIT - i) * digit,
+      accSecondCheckDigit: accSecondCheckDigit + (CPF_WEIGHT_SECOND_CHECK_DIGIT - i) * digit,
+    }
+  }, { accFirstCheckDigit: 0, accSecondCheckDigit: 0 })
+}
+
+function calculateCheckDigit(accumulator: number) {
+  const rest = accumulator % CPF_DIVISOR
+  return rest < 2 ? 0 : CPF_DIVISOR - rest
+}
+
+export function validate(cpf?: string) {
+  if (!cpf) { return false }
+  if (cpf.length < 11 || cpf.length > 14) { return false }
+
+  const sanitizedCPF = sanitizeString(cpf)
+  if (isIdenticalCharacters(sanitizedCPF)) { return false }
+  try {
+    const baseDigits = extractBaseDigits(sanitizedCPF)
+    const { accFirstCheckDigit, accSecondCheckDigit } = calculateAccumulatorCheckDigits(baseDigits)
+    const firstCheckDigit = calculateCheckDigit(accFirstCheckDigit)
+    const secondCheckdigit = calculateCheckDigit(firstCheckDigit * 2 + accSecondCheckDigit)
+    const targetCheckDigits = `${firstCheckDigit}${secondCheckdigit}`
+    const checkDigits = extractCheckDigits(sanitizedCPF)
+    return checkDigits === targetCheckDigits
+  } catch (e) {
+    console.error(`Erro: ${e}`)
+    return false
+  }
 }
