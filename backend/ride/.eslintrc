@@ -1,0 +1,8 @@
+{
+  "extends": "@antfu",
+  "rules": {
+    "curly": ["error", "multi-line"],
+    "max-statements-per-line": ["error", { "max": 2 }],
+    "@typescript-eslint/brace-style": ["error", "1tbs", { "allowSingleLine": true }]
+  }
+}
