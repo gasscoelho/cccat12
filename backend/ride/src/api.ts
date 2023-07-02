@@ -1,22 +1,25 @@
-// @ts-nocheck
-import express from "express";
-import { calculate } from "./RideCalculator";
-import Ride from "./Ride";
-const app = express();
+import express from 'express'
+import Ride from './Ride'
 
-app.use(express.json());
+const app = express()
 
-app.post("/calculate_ride", function (req, res) {
-	try {
-		const ride = new Ride();
-		for (const segment of req.body.segments) {
-			ride.addSegment(segment.distance, new Date(segment.date));
-		}
-		const price = ride.calculate();
-		res.json({ price });
-	} catch (e) {
-		res.status(422).send(e.message);
-	}
-});
+app.use(express.json())
 
-app.listen(3000);
+app.post('/calculate_ride', (req, res) => {
+  try {
+    const ride = new Ride()
+    for (const segment of req.body.segments) {
+      ride.addSegment(segment.distance, new Date(segment.date))
+    }
+    const price = ride.calculate()
+    res.json({ price })
+  } catch (e) {
+    if (e instanceof Error) {
+      res.status(422).send(e.message)
+    } else {
+      res.status(500).send('An unknown error occurred.')
+    }
+  }
+})
+
+app.listen(3000)
