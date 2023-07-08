@@ -9,6 +9,10 @@ function sanitizeString(input: string) {
     .replace(/\s/g, '')
 }
 
+function isValidLength(sanitizedInput: string) {
+  return sanitizedInput.length === 11
+}
+
 function isIdenticalCharacters(input: string) {
   return input.split('').every(char => char === input[0])
 }
@@ -35,22 +39,13 @@ function calculateCheckDigit(accumulator: number) {
   return rest < 2 ? 0 : CPF_DIVISOR - rest
 }
 
-export function validate(cpf?: string) {
-  if (!cpf) { return false }
-  if (cpf.length < 11 || cpf.length > 14) { return false }
-
+export function validate(cpf: string) {
   const sanitizedCPF = sanitizeString(cpf)
-  if (isIdenticalCharacters(sanitizedCPF)) { return false }
-  try {
-    const baseDigits = extractBaseDigits(sanitizedCPF)
-    const { accFirstCheckDigit, accSecondCheckDigit } = calculateAccumulatorCheckDigits(baseDigits)
-    const firstCheckDigit = calculateCheckDigit(accFirstCheckDigit)
-    const secondCheckdigit = calculateCheckDigit(firstCheckDigit * 2 + accSecondCheckDigit)
-    const targetCheckDigits = `${firstCheckDigit}${secondCheckdigit}`
-    const checkDigits = extractCheckDigits(sanitizedCPF)
-    return checkDigits === targetCheckDigits
-  } catch (e) {
-    console.error(`Erro: ${e}`)
-    return false
-  }
+  if (!isValidLength(sanitizedCPF) || isIdenticalCharacters(sanitizedCPF)) { return false }
+  const baseDigits = extractBaseDigits(sanitizedCPF)
+  const { accFirstCheckDigit, accSecondCheckDigit } = calculateAccumulatorCheckDigits(baseDigits)
+  const firstCheckDigit = calculateCheckDigit(accFirstCheckDigit)
+  const secondCheckdigit = calculateCheckDigit(firstCheckDigit * 2 + accSecondCheckDigit)
+  const targetCheckDigits = `${firstCheckDigit}${secondCheckdigit}`
+  return extractCheckDigits(sanitizedCPF) === targetCheckDigits
 }
